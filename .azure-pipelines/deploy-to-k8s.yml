@@ -1,0 +1,38 @@
+---
+parameters:
+  - name: k8sOverlayPath
+    type: string
+    default: '$(k8sOverlayPath)'
+  - name: environmentName
+    type: string
+ 
+steps:
+  - pwsh: |
+      Write-Host "Aplicando manifestos con Kustomize desde: ${{ parameters.k8sOverlayPath }}/${{ parameters.environmentName }}"
+      & kubectl apply -k "${{ parameters.k8sOverlayPath }}/${{ parameters.environmentName }}"
+    displayName: 'Aplicar Kustomize'
+
+  - pwsh: |
+      Write-Host "Esperando a que el deployment esté disponible..."
+      & kubectl rollout status -n ${{ parameters.environmentName }}-devsu-demo-devops-nodejs deployment devsu-demo-devops-nodejs-${{ parameters.environmentName }} --timeout=120s
+      if ($LASTEXITCODE -ne 0) {
+          Write-Error "Deployment no disponible. Revisa los eventos de Kubernetes."
+          exit 1
+      }
+    displayName: 'Esperar rollout del Deployment'
+  
+  - task: PowerShell@2
+    displayName: "Validar rollout ${{ parameters.environmentName }}"
+    inputs:
+      targetType: inline
+      script: |
+        $ns = "${{ parameters.environmentName }}-devsu-demo-devops-nodejs"
+        kubectl get pods -n $ns
+        kubectl rollout status deployment/devsu-demo-devops-nodejs-${{ parameters.environmentName }} -n $ns
+
+  - pwsh: |
+      Write-Host "Recursos desplegados:"
+      & kubectl get all | Out-String | Write-Host
+      Write-Host "Ingress:"
+      & kubectl get ingress | Out-String | Write-Host
+    displayName: 'Ver recursos desplegados'

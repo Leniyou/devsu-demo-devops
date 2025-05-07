@@ -1,0 +1,8 @@
+---
+# -- Variables -- #
+
+variables:
+  - name: nodeVersion
+    value: "23.x"
+  - name: k8sOverlayPath
+    value: 'environment/k8s/devsu-demo-devops-nodejs/overlays'

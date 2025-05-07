@@ -1,0 +1,21 @@
+---
+parameters:
+  - name: dockerRepositoryName
+    type: string
+
+steps:
+  # -- Escaneo de vulnerabilidades en la imagen Docker con Trivy -- #
+  - task: trivy@2
+    displayName: "Escaneo de vulnerabilidades con Trivy"
+    inputs:
+      method: install
+      version: latest
+      type: 'image'
+      target: "docker.io/${{ parameters.dockerRepositoryName }}:$(Build.BuildNumber)"
+      scanners: 'vuln'
+      ignoreUnfixed: true
+      ignoreScanErrors: true
+      severities: 'CRITICAL,HIGH'
+      reports: 'html, sarif'
+      publish: true
+      exitCode: 0

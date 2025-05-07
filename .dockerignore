@@ -1,0 +1,27 @@
+# Directories to ignore
+# when building the Docker image
+.azure-pipelines
+.vscode
+.git
+node_modules
+src/tests
+test-results
+assets
+environment
+evidencias
+
+# Files to ignore
+# when building the Docker image
+.babelrc
+.dockerignore
+.gitignore
+azure-pipelines.yml
+Dockerfile
+eslint.config.js
+jest.config.mjs
+package-lock.json
+sonar-project.properties
+*.log
+*.sqlite
+*.test.js
+*.md

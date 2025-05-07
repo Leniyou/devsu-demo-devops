@@ -1,0 +1,84 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pool:
+  name: 'devsu-demo'
+
+variables:
+  - template: .azure-pipelines/variables.yml
+  - group: global-secrets
+
+parameters:
+  - name: environments
+    type: object
+    default:
+      - dev
+      - qa
+
+stages:
+  - stage: IntegracionContinua
+    displayName: Compilación y Pruebas
+    jobs:
+      - job: BuildAndTest
+        steps:
+          - template: .azure-pipelines/code-build-and-test.yml
+            parameters:
+              repositoryName: '$(Build.Repository.Name)'
+              sonarqubeServiceName: '$(sonarqubeServiceName)'
+              sonarToken: '$(sonarToken)'
+
+  - stage: DevSecOps
+    displayName: Análisis de Vulnerabilidades
+    dependsOn: [IntegracionContinua]
+    jobs:
+      - job: VulnerabilityScan
+        steps:
+          - template: .azure-pipelines/vulnerability-scan.yml
+            parameters:
+              repositoryName: '$(Build.Repository.Name)'
+              snykServiceName: '$(snykServiceName)'
+  
+  - stage: Dockerizar
+    dependsOn: [IntegracionContinua, DevSecOps]
+    jobs:
+      - job: DockerBuildAndPush
+        displayName: Construir y subir la imagen Docker
+        steps:
+          - template: .azure-pipelines/build-and-push-docker.yml
+            parameters:
+              dockerRepositoryName: '$(dockerRepositoryName)'
+              dockerContainerRegistry: '$(dockerContainerRegistry)'
+
+  - stage: DespliegueContinuo
+    dependsOn: [Dockerizar]
+    displayName: DeployToK8s
+    jobs:
+      - job: DeployToK8s
+        displayName: Despliegue a ambientes pre-productivos
+        strategy:
+          matrix:
+            ${{ each env in parameters.environments }}:
+              ${{ env }}:
+                  ENV_NAME: ${{ env }}
+        steps:
+          - template: .azure-pipelines/deploy-to-k8s.yml
+            parameters:
+              environmentName: '$(ENV_NAME)'
+
+  # stage separado para producción con aprobación manual
+  - stage: DeployProd
+    dependsOn: [DespliegueContinuo]
+    condition: succeeded()
+    jobs:
+      - deployment: DeployToProd
+        displayName: Despliegue a ambiente productivo
+        environment: 'prod'
+        strategy:
+          runOnce:
+            deploy:
+              steps:
+                - template: .azure-pipelines/deploy-to-k8s.yml
+                  parameters:
+                    environmentName: 'prod'

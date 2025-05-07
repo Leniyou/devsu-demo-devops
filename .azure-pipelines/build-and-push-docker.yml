@@ -1,0 +1,48 @@
+---
+parameters:
+  - name: repositoryName
+    type: string
+    default: 'devsu-demo-devops-nodejs'
+  - name: dockerRepositoryName
+    type: string
+  - name: dockerContainerRegistry
+    type: string
+
+steps:
+  - checkout: self
+    lfs: true
+
+  - task: Docker@2
+    displayName: 'Iniciar sesión Docker Hub'
+    inputs:
+      command: 'login'
+      containerRegistry: ${{ parameters.dockerContainerRegistry }}
+
+  # -- Docker build -- #
+  - task: Docker@2
+    displayName: "Construir imagen con Docker build"
+    inputs:
+      command: 'build'
+      containerRegistry: '${{ parameters.dockerContainerRegistry }}'
+      repository: '${{ parameters.dockerRepositoryName }}'
+      buildContext: '.'
+      Dockerfile: "**/Dockerfile"
+      tags: |
+        $(Build.BuildNumber)
+        latest
+
+  # -- Escaneo de vulnerabilidades en la imagen Docker con Trivy -- #
+  - template: trivy-scan.yml
+    parameters:
+      dockerRepositoryName: '${{ parameters.dockerRepositoryName }}'
+
+  # -- Docker Push al registro en DockerHub -- #
+  - task: Docker@2
+    displayName: "Subir imagen con Docker push"
+    inputs:
+      command: 'push'
+      containerRegistry: '${{ parameters.dockerContainerRegistry }}'
+      repository: '${{ parameters.dockerRepositoryName }}'
+      tags: |
+        $(Build.BuildNumber)
+        latest

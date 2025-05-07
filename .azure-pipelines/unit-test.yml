@@ -1,0 +1,24 @@
+---
+# -- 
+# Este archivo se encarga de ejecutar las pruebas unitarias 
+# de la aplicación Node.js. Se asume que las dependencias 
+# ya han sido instaladas en un paso anterior y publicadas 
+# como artefacto.
+# NOTA: Este archivo se ejecuta después de que el artefacto de 
+# Node.js ha sido descargado.
+# --
+
+steps:
+  - task: DownloadPipelineArtifact@1
+    displayName: 'Descargar artefacto de Node.js'
+    inputs:
+      artifactName: 'node_modules'
+      targetPath: '$(Build.SourcesDirectory)/node_modules'
+      
+  - task: Bash@3
+    displayName: 'Ejecutar pruebas unitarias'
+    inputs:
+      targetType: 'inline'
+      script: |
+        npm run test:ci
+

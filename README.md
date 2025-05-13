@@ -168,7 +168,12 @@ Para completar este ejercicio es necesario tener instaladas y configuradas las s
     npm run test
     ```
 
-    ![npm-run-test](assets/npm-run-test.png)
+    <details>
+      <summary>Ver imagen</summary>
+
+      ![npm-run-test](assets/npm-run-test.png)
+
+    </details>
 
     Con esto se valida que las pruebas están correctas, sin embargo, estas no generan ningún archivo de reporte ni cobertura de código, por lo cual se debe crear un archivo de [Jest](#222-configuración-de-pruebas-unitarias-con-jest) con esas configuraciones.
 
@@ -215,7 +220,7 @@ Para completar este ejercicio es necesario tener instaladas y configuradas las s
     mkdir src/tests && mv src/index.test.js src/tests
     ```
 
-    Tambien se debe actualizar la referencia en el archivo `src/tests/index.test.js` para referirse al directorio `src/`:
+    También se debe actualizar la referencia en el archivo `src/tests/index.test.js` para referirse al directorio `src/`:
 
     ```js
     // Cambiar esta linea:
@@ -293,7 +298,12 @@ Para completar este ejercicio es necesario tener instaladas y configuradas las s
 
     Se agregan como `devDependencies` puesto que no son necesarias para que la aplicación funcione, solo son necesarias para las pruebas:
 
-    ![devDependencies](assets/devDependencies.png)
+    <details>
+      <summary>Ver imagen</summary>
+
+      ![devDependencies](assets/devDependencies.png)
+
+    </details>
 
     También como buena práctica agregar esta carpeta **test-result** al archivo [.gitignore](.gitignore) para que no sea incluida al momento de subir los cambios al repositorio.
 
@@ -1246,7 +1256,7 @@ En esta parte se crean los archivos que conformarán el CI pipeline de Azure Dev
                     - template: .azure-pipelines/deploy-to-k8s.yml
     ```
 
-    Explicación:
+    **Explicación:**
 
     - **trigger**: Para iniciar el pipeline al momento de hacer *push* en la rama main.
     - **pool**: El nombre del *Agent pool* que se creó en el paso previo [Instalar Self-hosted Agent](#262-crear-repositorio-en-azure-devops).
@@ -1704,9 +1714,12 @@ Una vez instalado, iniciar el servicio con el comando:
 minikube start
 ```
 
-Evidencia:
+<details>
+  <summary>Ver imagen</summary>
 
-![minikube-start](assets/minikube-start.png)
+  ![minikube-start](assets/minikube-start.png)
+
+</details>
 
 Adicional agregar estos paquetes que será de gran utilidad:
 

@@ -12,7 +12,7 @@ steps:
       version: latest
       type: 'image'
       target: "docker.io/${{ parameters.dockerRepositoryName }}:$(Build.BuildNumber)"
-      scanners: 'vuln'
+      scanners: 'vuln, misconfig'
       ignoreUnfixed: true
       ignoreScanErrors: true
       severities: 'CRITICAL,HIGH'

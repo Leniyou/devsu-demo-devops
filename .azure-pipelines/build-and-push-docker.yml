@@ -28,7 +28,10 @@ steps:
       buildContext: '.'
       Dockerfile: "**/Dockerfile"
       tags: |
-        $(Build.BuildNumber)
+        $(dockerTagAlpha)
+        $(dockerTagBeta)
+        $(dockerTagProd)
+        $(dockerTagFinal)
         latest
 
   # -- Escaneo de vulnerabilidades en la imagen Docker con Trivy -- #
@@ -44,5 +47,8 @@ steps:
       containerRegistry: '${{ parameters.dockerContainerRegistry }}'
       repository: '${{ parameters.dockerRepositoryName }}'
       tags: |
-        $(Build.BuildNumber)
+        $(dockerTagAlpha)
+        $(dockerTagBeta)
+        $(dockerTagProd)
+        $(dockerTagFinal)
         latest

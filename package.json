@@ -1,14 +1,14 @@
 {
   "name": "demo",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "",
   "main": "index.js",
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "build": "echo \"Este script se ejecuta para poder integrar Análisis de Código con SonarQube\"",
+    "build": "echo \"Este script se ejecuta para poder integrar AnÃ¡lisis de CÃ³digo con SonarQube\"",
     "test": "jest",
-    "test:ci": "jest --ci --silent --runInBand --watchAll=false --detectOpenHandles --forceExit --no-cache"
+    "test:ci": "jest --ci --silent --runInBand --watchAll=false --forceExit --no-cache --detectOpenHandles"
   },
   "author": "Devsu",
   "dependencies": {

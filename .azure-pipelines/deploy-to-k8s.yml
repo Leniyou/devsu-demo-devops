@@ -3,18 +3,36 @@ parameters:
   - name: k8sOverlayPath
     type: string
     default: '$(k8sOverlayPath)'
-  - name: environmentName
+  - name: projectName
     type: string
+    default: '$(projectName)'
+  - name: gitEmail
+    type: string
+    default: '$(gitEmail)'
+  - name: gitUser
+    type: string
+    default: '$(gitUser)'
  
 steps:
+  # -- Configurar Kustomize -- #
   - pwsh: |
-      Write-Host "Aplicando manifestos con Kustomize desde: ${{ parameters.k8sOverlayPath }}/${{ parameters.environmentName }}"
-      & kubectl apply -k "${{ parameters.k8sOverlayPath }}/${{ parameters.environmentName }}"
+      ./scripts/configure-kustomize.ps1
+    displayName: 'Configurar Kustomize'
+
+  # -- Actualizar los tags de la imágenes Docker para el ambiente en específico -- #
+  - pwsh: |
+      ./scripts/update-kustomize-tag.ps1 -Env '$(envName)' -Version '$(dockerTag)' -Email '${{ parameters.gitEmail }}' -User '${{ parameters.gitUser }}'
+    displayName: 'Actualizar image tag'
+
+  # -- Se aplican los cambios en el Deployment -- #
+  - pwsh: |
+      Write-Host "Aplicando manifestos con Kustomize desde: ${{ parameters.k8sOverlayPath }}/$(envName)"
+      & kubectl apply -k "${{ parameters.k8sOverlayPath }}/$(envName)"
     displayName: 'Aplicar Kustomize'
 
   - pwsh: |
       Write-Host "Esperando a que el deployment esté disponible..."
-      & kubectl rollout status -n ${{ parameters.environmentName }}-devsu-demo-devops-nodejs deployment devsu-demo-devops-nodejs-${{ parameters.environmentName }} --timeout=120s
+      & kubectl rollout status -n ${{ parameters.projectName }}-$(envName) deployment ${{ parameters.projectName }}-$(envName) --timeout=120s
       if ($LASTEXITCODE -ne 0) {
           Write-Error "Deployment no disponible. Revisa los eventos de Kubernetes."
           exit 1
@@ -22,17 +40,17 @@ steps:
     displayName: 'Esperar rollout del Deployment'
   
   - task: PowerShell@2
-    displayName: "Validar rollout ${{ parameters.environmentName }}"
+    displayName: "Validar rollout $(envName)"
     inputs:
       targetType: inline
       script: |
-        $ns = "${{ parameters.environmentName }}-devsu-demo-devops-nodejs"
+        $ns = "${{ parameters.projectName }}-$(envName)"
         kubectl get pods -n $ns
-        kubectl rollout status deployment/devsu-demo-devops-nodejs-${{ parameters.environmentName }} -n $ns
+        kubectl rollout status deployment/${{ parameters.projectName }}-$(envName) -n $ns
 
   - pwsh: |
       Write-Host "Recursos desplegados:"
       & kubectl get all | Out-String | Write-Host
       Write-Host "Ingress:"
-      & kubectl get ingress | Out-String | Write-Host
+      & kubectl get ingress -n ${{ parameters.projectName }}-$(envName) | Out-String | Write-Host
     displayName: 'Ver recursos desplegados'

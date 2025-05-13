@@ -1,0 +1,8 @@
+steps:
+  - checkout: self
+    lfs: true
+
+  - pwsh: |
+      ./scripts/update-tag-version.ps1
+    displayName: Versionado
+    name: "SetTags"

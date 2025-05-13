@@ -1,0 +1,20 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: devsu-demo-devops-nodejs-dev
+nameSuffix: -dev
+resources:
+- ../../base
+- namespace.yml
+secretGenerator:
+- envs:
+  - secret/devsu-demo-devops-nodejs.env
+  name: secret-devsu-demo-devops-nodejs
+patches:
+- path: patch/ingress-patch.yml
+  target:
+    kind: Ingress
+    name: devsu-demo-devops-nodejs-ingress
+images:
+- name: devsu-demo-devops-nodejs
+  newName: docker.io/leniyou/devsu-demo-devops-nodejs
+  newTag: 2.0.0-alpha.1

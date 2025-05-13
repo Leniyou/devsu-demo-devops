@@ -2,6 +2,7 @@
 logs
 *.log
 npm-debug.log*
+o
 
 # Coverage directory
 test-results
@@ -13,5 +14,5 @@ node_modules/
 # Optional npm cache directory
 .npm
 
-# Nest.js build / generate output
-dist
+.vscode
+package-lock.json

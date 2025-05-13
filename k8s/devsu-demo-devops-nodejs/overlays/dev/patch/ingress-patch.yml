@@ -1,0 +1,16 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: devsu-demo-devops-nodejs-ingress
+spec:
+  rules:
+    - host: devsu-demo-devops-nodejs-dev.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: devsu-demo-devops-nodejs-service
+                port:
+                  number: 8000

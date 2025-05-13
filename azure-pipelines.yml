@@ -4,26 +4,19 @@ trigger:
       - main
 
 pool:
-  name: 'devsu-demo'
+  name: 'devsu-demo' # <-- Agente Auto-Hospedado
 
 variables:
   - template: .azure-pipelines/variables.yml
   - group: global-secrets
 
-parameters:
-  - name: environments
-    type: object
-    default:
-      - dev
-      - qa
-
 stages:
-  - stage: IntegracionContinua
-    displayName: Compilación y Pruebas
+  - stage: BuildAndTest
+    displayName: Compilación y Pruebas de Código
     jobs:
-      - job: BuildAndTest
+      - job: BuildAndTestCode
         steps:
-          - template: .azure-pipelines/code-build-and-test.yml
+          - template: .azure-pipelines/build-and-test-code.yml
             parameters:
               repositoryName: '$(Build.Repository.Name)'
               sonarqubeServiceName: '$(sonarqubeServiceName)'
@@ -31,7 +24,7 @@ stages:
 
   - stage: DevSecOps
     displayName: Análisis de Vulnerabilidades
-    dependsOn: [IntegracionContinua]
+    dependsOn: [BuildAndTest]
     jobs:
       - job: VulnerabilityScan
         steps:
@@ -39,46 +32,73 @@ stages:
             parameters:
               repositoryName: '$(Build.Repository.Name)'
               snykServiceName: '$(snykServiceName)'
-  
-  - stage: Dockerizar
-    dependsOn: [IntegracionContinua, DevSecOps]
+
+  - stage: Versioning
+    displayName: Versionamiento del Proyecto
+    dependsOn: [BuildAndTest]
     jobs:
-      - job: DockerBuildAndPush
+      - job: GitVersion
+        displayName: Versionar Proyecto
+        steps:
+          - template: .azure-pipelines/git-version.yml
+
+  - stage: Dockerize
+    displayName: Construir y subir Imagen Docker
+    dependsOn: [DevSecOps, Versioning]
+    jobs:
+      - job: BuildAndPushDocker
         displayName: Construir y subir la imagen Docker
+        variables:
+          dockerTagAlpha: $[stageDependencies.Versioning.GitVersion.outputs['SetTags.dockerTagAlpha']]
+          dockerTagBeta: $[stageDependencies.Versioning.GitVersion.outputs['SetTags.dockerTagBeta']]
+          dockerTagProd: $[stageDependencies.Versioning.GitVersion.outputs['SetTags.dockerTagProd']]
+          dockerTagFinal: $[stageDependencies.Versioning.GitVersion.outputs['SetTags.dockerTagFinal']]
         steps:
           - template: .azure-pipelines/build-and-push-docker.yml
             parameters:
               dockerRepositoryName: '$(dockerRepositoryName)'
               dockerContainerRegistry: '$(dockerContainerRegistry)'
 
-  - stage: DespliegueContinuo
-    dependsOn: [Dockerizar]
-    displayName: DeployToK8s
+  - stage: DeployToDev
+    displayName: "Desplegar a DEV"
+    dependsOn: [Versioning, Dockerize]
     jobs:
-      - job: DeployToK8s
-        displayName: Despliegue a ambientes pre-productivos
-        strategy:
-          matrix:
-            ${{ each env in parameters.environments }}:
-              ${{ env }}:
-                  ENV_NAME: ${{ env }}
+      - job: DeployToK8sDev
+        condition: always()
+        variables:
+          envName: 'dev'
+          dockerTag: $[ stageDependencies.Versioning.GitVersion.outputs['SetTags.dockerTagAlpha'] ]
         steps:
           - template: .azure-pipelines/deploy-to-k8s.yml
-            parameters:
-              environmentName: '$(ENV_NAME)'
 
-  # stage separado para producción con aprobación manual
-  - stage: DeployProd
-    dependsOn: [DespliegueContinuo]
-    condition: succeeded()
+  - stage: DeployToQA
+    displayName: "Desplegar a QA"
+    dependsOn: [Versioning, DeployToDev]
     jobs:
-      - deployment: DeployToProd
-        displayName: Despliegue a ambiente productivo
+    - deployment: DeployToK8sQA
+      condition: succeeded()
+      environment: 'qa'
+      variables:
+        envName: 'qa'
+        dockerTag: $[ stageDependencies.Versioning.GitVersion.outputs['SetTags.dockerTagBeta'] ]
+      strategy:
+        runOnce:
+          deploy:
+            steps:
+              - template: .azure-pipelines/deploy-to-k8s.yml
+
+  - stage: DeployToProd
+    displayName: "Desplegar a PROD"
+    dependsOn: [Versioning, DeployToQA]
+    jobs:
+      - deployment: DeployToK8sProd
+        condition: succeeded()
         environment: 'prod'
+        variables:
+          envName: 'prod'
+          dockerTag: $[ stageDependencies.Versioning.GitVersion.outputs['SetTags.dockerTagProd'] ]
         strategy:
           runOnce:
             deploy:
               steps:
                 - template: .azure-pipelines/deploy-to-k8s.yml
-                  parameters:
-                    environmentName: 'prod'

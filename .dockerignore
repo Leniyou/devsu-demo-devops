@@ -9,6 +9,7 @@ test-results
 assets
 environment
 evidencias
+scripts
 
 # Files to ignore
 # when building the Docker image
@@ -22,6 +23,5 @@ jest.config.mjs
 package-lock.json
 sonar-project.properties
 *.log
-*.sqlite
 *.test.js
 *.md

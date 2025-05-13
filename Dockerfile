@@ -34,9 +34,9 @@ USER node
 # Exponer el puerto
 EXPOSE 8000
 
-# Healthcheck simple basado en la ruta /
+# Healthcheck simple basado en la ruta /health
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8000/ || exit 1
+  CMD curl -f http://localhost:8000/health || exit 1
 
 # Comando para iniciar la app
-CMD [ "node", "src/index.js"]
+CMD [ "node", "src/index.js" ]

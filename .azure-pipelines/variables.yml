@@ -4,5 +4,14 @@
 variables:
   - name: nodeVersion
     value: "23.x"
+
   - name: k8sOverlayPath
-    value: 'environment/k8s/devsu-demo-devops-nodejs/overlays'
+    value: 'k8s/devsu-demo-devops-nodejs/overlays'
+
+  - name: projectName
+    value: "devsu-demo-devops-nodejs"
+
+  - name: gitEmail
+    value: '$(Build.RequestedForEmail)'
+  - name: gitUser
+    value: '$(Build.RequestedFor)'
